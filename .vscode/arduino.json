@@ -1,0 +1,4 @@
+{
+    "board": "arduino:sam:arduino_due_x",
+    "sketch": "casio_keydetect/casio_keydetect.ino"
+}

@@ -1,0 +1,54 @@
+{
+    "configurations": [
+        {
+            "name": "Mac",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "macFrameworkPath": [
+                "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+            ],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "macos-clang-arm64"
+        },
+        {
+            "name": "Arduino",
+            "includePath": [
+                
+                "/Users/mikeperrow/Library/Arduino15/packages/arduino/hardware/sam/1.6.12/cores/arduino",
+                "/Users/mikeperrow/Library/Arduino15/packages/arduino/hardware/sam/1.6.12/libraries/SPI",
+                "/Users/mikeperrow/Library/Arduino15/packages/arduino/hardware/sam/1.6.12/libraries/Wire",
+                "/Users/mikeperrow/Library/Arduino15/packages/arduino/hardware/sam/1.6.12/libraries/HID",
+                "/Users/mikeperrow/Library/Arduino15/packages/arduino/hardware/sam/1.6.12/system/libsam",
+                "/Users/mikeperrow/Library/Arduino15/packages/arduino/hardware/sam/1.6.12/system/libsam/include",
+                "/Users/mikeperrow/Library/Arduino15/packages/arduino/hardware/sam/1.6.12/system/CMSIS/Device/ATMEL",
+                "/Users/mikeperrow/Library/Arduino15/packages/arduino/hardware/sam/1.6.12/variants/arduino_due_x",
+                // "{path-to-arduino}/hardware/sam/1.6.12/cores/arduino",
+                // "{path-to-arduino}/hardware/arduino/avr/cores/arduino/",
+                "{path-to-arduino}/hardware/arduino/avr/libraries/EEPROM/",
+                // "{path-to-arduino}/hardware/arduino/avr/libraries/SPI/",
+                "{path-to-arduino}/hardware/arduino/avr/libraries/SoftwareSerial/",
+                // "{path-to-arduino}/hardware/arduino/avr/libraries/Wire/",
+                "{path-to-arduino}/hardware/tools/avr/avr/include/",
+                "{path-to-arduino}/hardware/tools/avr/avr/include/avr/",
+                "{path-to-arduino}/hardware/tools/avr/avr/include/compat/",
+                "{path-to-arduino}/hardware/tools/avr/avr/include/util/",
+                "{path-to-arduino}/hardware/tools/avr/lib/gcc/avr/4.*.*/include/",
+                "{path-to-arduino}/hardware/tools/avr/lib/gcc/avr/4.*.*/include-fixed/",
+                // "{path-to-arduino}/libraries/MIDIUSB",
+                "/Users/mikeperrow/Documents/Arduino/libraries/MIDIUSB/src/"
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "databaseFilename": ""
+            },
+            "cStandard": "c17",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "macos-clang-arm64"
+        }
+    ],
+    "version": 4
+}
