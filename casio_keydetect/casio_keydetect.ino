@@ -67,10 +67,24 @@ void setup() {
     pinMode(i, INPUT_PULLUP);
   }
 
+  // Pins for the sustain pedal
+  pinMode(30, INPUT_PULLUP);
+  pinMode(31, OUTPUT);
+  digitalWrite(31, 0);
+
   init_keyswitch_arrays();
 }
 
+int currentSustainStatus = 0;
+
 void loop() {
+  int sustainPedalStatus = digitalRead(30);
+  if (sustainPedalStatus != currentSustainStatus) {
+    SerialUSB.print("Sustain pedal change: ");
+    SerialUSB.println(sustainPedalStatus);
+    currentSustainStatus = sustainPedalStatus;
+  }
+
   for (int kc = 0; kc < 8; ++kc) {
     int pin = kc_pin(kc);
     digitalWrite(pin, 0);
