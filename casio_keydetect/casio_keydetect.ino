@@ -5,13 +5,13 @@ int fi_pin(int n);
 int si_pin(int n);
 int key_for_kc_fisi(int kc, int fi_or_si);
 
-void noteOn(byte pitch, byte velocity) {
+void sendMidiNoteOn(byte pitch, byte velocity) {
   midiEventPacket_t noteOn = {0x09, 0x90, pitch, velocity};
   MidiUSB.sendMIDI(noteOn);
   MidiUSB.flush();
 }
 
-void noteOff(byte pitch, byte velocity) {
+void sendMidiNoteOff(byte pitch, byte velocity) {
   midiEventPacket_t noteOff = {0x08, 0x80, pitch, velocity};
   MidiUSB.sendMIDI(noteOff);
   MidiUSB.flush();
@@ -34,6 +34,10 @@ struct KeySwitchChange {
 KeySwitchChange fi_switch_changes[88];
 KeySwitchChange si_switch_changes[88];
 
+// True if the note is currently "on"
+// i.e. a midi noteOn message has been sent but no noteOff
+bool noteOn[88];
+
 void init_keyswitch_arrays() {
   unsigned long t = micros();
   for (int i = 0; i < 88; ++i) {
@@ -45,6 +49,7 @@ void init_keyswitch_arrays() {
       state: 1,
       micros: t,
     };
+    noteOn[i] = false;
   }
 }
 
@@ -103,16 +108,6 @@ void loop() {
       unsigned long t = micros();
       int fi_val = digitalRead(fi_pin(fisi));
       if (fi_val != fi_switch_changes[keynum].state) {
-//          SerialUSB.print("FI key change: ");
-//          SerialUSB.print(kc);
-//          SerialUSB.print(", ");
-//          SerialUSB.print(fisi);
-//          SerialUSB.print(", ");
-//          SerialUSB.print(keynum);
-//          SerialUSB.print(", ");
-//          SerialUSB.print(fi_val);
-//          SerialUSB.print(", t: ");
-//          SerialUSB.println(t);
           fi_switch_changes[keynum] = KeySwitchChange {
             state: fi_val,
             micros: t,
@@ -120,30 +115,21 @@ void loop() {
 
           // C3 == keynum 27, midi note 48
           // So add 21 to keynum
-          if (fi_val == 1 && si_switch_changes[keynum].state == 1) {
+          if (fi_val == 1 && si_switch_changes[keynum].state == 1 && noteOn[keynum]) {
             SerialUSB.print("noteOff: ");
             SerialUSB.println(keynum + 21);
-            noteOff(keynum + 21, 127);
+            noteOn[keynum] = false;
+            sendMidiNoteOff(keynum + 21, 127);
           }
       }
       
       int si_val = digitalRead(si_pin(fisi));
       if (si_val != si_switch_changes[keynum].state) {
-//          SerialUSB.print("SI key change: ");
-//          SerialUSB.print(kc);
-//          SerialUSB.print(", ");
-//          SerialUSB.print(fisi);
-//          SerialUSB.print(", ");
-//          SerialUSB.print(keynum);
-//          SerialUSB.print(", ");
-//          SerialUSB.print(si_val);
-//          SerialUSB.print(", t: ");
-//          SerialUSB.println(t);
           si_switch_changes[keynum] = KeySwitchChange {
             state: si_val,
             micros: t,
           };
-          if (si_val == 0 && fi_switch_changes[keynum].state == 0) {
+          if (si_val == 0 && fi_switch_changes[keynum].state == 0 && !noteOn[keynum]) {
             SerialUSB.print("noteOn: ");
             SerialUSB.print(keynum + 21);
             SerialUSB.print(", time since fi: ");
@@ -157,7 +143,8 @@ void loop() {
             byte velocity = 127 - inv_velocity;
             SerialUSB.print("Velocity: ");
             SerialUSB.println(velocity);
-            noteOn(keynum + 21, velocity);
+            noteOn[keynum] = true;
+            sendMidiNoteOn(keynum + 21, velocity);
           }
       }
     }
