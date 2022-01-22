@@ -17,6 +17,13 @@ void noteOff(byte pitch, byte velocity) {
   MidiUSB.flush();
 }
 
+void sendSustainPedalMidi(bool on) {
+  // Midi CC 64 on channel 0, >= 64 velocity for "on"
+  midiEventPacket_t event = {0x0B, 0xB0, 64, on ? 127 : 0};
+  MidiUSB.sendMIDI(event);
+  MidiUSB.flush();
+}
+
 struct KeySwitchChange {
   int state;
 
@@ -83,6 +90,7 @@ void loop() {
     SerialUSB.print("Sustain pedal change: ");
     SerialUSB.println(sustainPedalStatus);
     currentSustainStatus = sustainPedalStatus;
+    sendSustainPedalMidi(!sustainPedalStatus);
   }
 
   for (int kc = 0; kc < 8; ++kc) {
