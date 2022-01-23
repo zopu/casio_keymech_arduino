@@ -1,8 +1,7 @@
 #include "MIDIUSB.h"
 
-int kc_pin(int n);
-int fi_pin(int n);
-int si_pin(int n);
+#include "pins.h"
+
 int key_for_kc_fisi(int kc, int fi_or_si);
 
 void sendMidiNoteOn(byte pitch, byte velocity) {
@@ -22,6 +21,12 @@ void sendSustainPedalMidi(bool on) {
   midiEventPacket_t event = {0x0B, 0xB0, 64, on ? 127 : 0};
   MidiUSB.sendMIDI(event);
   MidiUSB.flush();
+}
+
+// C3 == keynum 27, midi note 48
+// So add 21 to keynum
+int midi_note_for_key(int keynum) {
+  return keynum + 21;
 }
 
 struct KeySwitchChange {
@@ -113,13 +118,12 @@ void loop() {
             micros: t,
           };
 
-          // C3 == keynum 27, midi note 48
-          // So add 21 to keynum
+          
           if (fi_val == 1 && si_switch_changes[keynum].state == 1 && noteOn[keynum]) {
             SerialUSB.print("noteOff: ");
-            SerialUSB.println(keynum + 21);
+            SerialUSB.println(midi_note_for_key(keynum));
             noteOn[keynum] = false;
-            sendMidiNoteOff(keynum + 21, 127);
+            sendMidiNoteOff(midi_note_for_key(keynum), 127);
           }
       }
       
@@ -131,20 +135,15 @@ void loop() {
           };
           if (si_val == 0 && fi_switch_changes[keynum].state == 0 && !noteOn[keynum]) {
             SerialUSB.print("noteOn: ");
-            SerialUSB.print(keynum + 21);
+            SerialUSB.print(midi_note_for_key(keynum));
             SerialUSB.print(", time since fi: ");
             SerialUSB.println(t - fi_switch_changes[keynum].micros);
             unsigned long hit_time = t - fi_switch_changes[keynum].micros;
-            // TODO: / 1800 is picked just to get numbers in roughly the right range
-            unsigned long inv_velocity = hit_time / 1800;
-            if (inv_velocity > 127) {
-              inv_velocity = 127;
-            }
-            byte velocity = 127 - inv_velocity;
+            byte velocity = velocity_from_switch_time(hit_time);
             SerialUSB.print("Velocity: ");
             SerialUSB.println(velocity);
             noteOn[keynum] = true;
-            sendMidiNoteOn(keynum + 21, velocity);
+            sendMidiNoteOn(midi_note_for_key(keynum), velocity);
           }
       }
     }
@@ -152,42 +151,15 @@ void loop() {
   }
 }
 
+byte velocity_from_switch_time(unsigned long switch_time_micros) {
+  // TODO: / 1800 is picked just to get numbers in roughly the right range
+  unsigned long inv_velocity = switch_time_micros / 1800;
+  if (inv_velocity > 127) {
+    inv_velocity = 127;
+  }
+  return 127 - inv_velocity;
+}
+
 int key_for_kc_fisi(int kc, int fi_or_si) {
   return (fi_or_si * 8) + kc;
-}
-
-// Defaults to returning pin of KC-0 if not 0<=n<=7
-int kc_pin(int n) {
-  if (n < 0 || n > 7) {
-    return 5;
-  }
-  if ( n % 2 == 1) {
-    return 20 + ((n - 1) / 2);
-  } else {
-    return 5 + (n / 2);
-  }
-}
-
-// Defaults to returning pin of FI-0 if not 0<=num<=10
-int fi_pin(int n) {
-  // FI- pins are 0, 1, 2, 3, 4, 24, 25, 26, 27, 28, 29
-  if (n >= 0 && n <= 4) {
-    return n;
-  }
-  if (n >= 5 && n <= 10) {
-    return 19 + n;
-  }
-  return 0;  // FI-0
-}
-
-// Defaults to returning pin of SI-0 if not 0<=num<=10
-int si_pin(int n) {
-  // SI- pins are 15, 16, 17, 18, 19, 9, 10, 11, 12, 13, 14
-  if (n >= 0 && n <= 4) {
-    return 15 + n;
-  }
-  if (n >= 5 && n <= 10) {
-    return 4 + n;
-  }
-  return 0;  // FI-0
 }
