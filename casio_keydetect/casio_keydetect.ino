@@ -136,7 +136,6 @@ void loop() {
             state: fi_val,
             micros: t,
           };
-
           
           if (fi_val == 1 && si_switch_changes[keynum].state == 1 && noteOn[keynum]) {
             LOG("noteOff: ");
