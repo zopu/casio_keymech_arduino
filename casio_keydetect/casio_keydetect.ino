@@ -1,6 +1,19 @@
 #include "MIDIUSB.h"
 
 #include "pins.h"
+#include "velocity.h"
+
+bool should_log_to_usb = false;
+
+#define LOG(msg) \
+if (should_log_to_usb) { \
+  SerialUSB.print(msg); \
+}
+
+#define LOGLN(msg) \
+if (should_log_to_usb) { \
+  SerialUSB.println(msg); \
+}
 
 int key_for_kc_fisi(int kc, int fi_or_si);
 
@@ -27,6 +40,10 @@ void sendSustainPedalMidi(bool on) {
 // So add 21 to keynum
 int midi_note_for_key(int keynum) {
   return keynum + 21;
+}
+
+int key_for_kc_fisi(int kc, int fi_or_si) {
+  return (fi_or_si * 8) + kc;
 }
 
 struct KeySwitchChange {
@@ -59,9 +76,11 @@ void init_keyswitch_arrays() {
 }
 
 void setup() {
-  while(!SerialUSB);
-  SerialUSB.begin(9600);
-  SerialUSB.println("Starting!");
+  if (should_log_to_usb) {
+    while(!SerialUSB);
+    SerialUSB.begin(9600);
+    SerialUSB.println("Starting!");
+  }
 
   // KC pins are 5, 6, 7, 8, 20, 21, 22, 23
   for (int i = 0; i <= 4; ++i) {
@@ -97,8 +116,8 @@ int currentSustainStatus = 0;
 void loop() {
   int sustainPedalStatus = digitalRead(30);
   if (sustainPedalStatus != currentSustainStatus) {
-    SerialUSB.print("Sustain pedal change: ");
-    SerialUSB.println(sustainPedalStatus);
+    LOG("Sustain pedal change: ");
+    LOGLN(sustainPedalStatus);
     currentSustainStatus = sustainPedalStatus;
     sendSustainPedalMidi(!sustainPedalStatus);
   }
@@ -120,8 +139,8 @@ void loop() {
 
           
           if (fi_val == 1 && si_switch_changes[keynum].state == 1 && noteOn[keynum]) {
-            SerialUSB.print("noteOff: ");
-            SerialUSB.println(midi_note_for_key(keynum));
+            LOG("noteOff: ");
+            LOGLN(midi_note_for_key(keynum));
             noteOn[keynum] = false;
             sendMidiNoteOff(midi_note_for_key(keynum), 127);
           }
@@ -134,14 +153,14 @@ void loop() {
             micros: t,
           };
           if (si_val == 0 && fi_switch_changes[keynum].state == 0 && !noteOn[keynum]) {
-            SerialUSB.print("noteOn: ");
-            SerialUSB.print(midi_note_for_key(keynum));
-            SerialUSB.print(", time since fi: ");
-            SerialUSB.println(t - fi_switch_changes[keynum].micros);
+            LOG("noteOn: ");
+            LOG(midi_note_for_key(keynum));
+            LOG(", time since fi: ");
+            LOGLN(t - fi_switch_changes[keynum].micros);
             unsigned long hit_time = t - fi_switch_changes[keynum].micros;
             byte velocity = velocity_from_switch_time(hit_time);
-            SerialUSB.print("Velocity: ");
-            SerialUSB.println(velocity);
+            LOG("Velocity: ");
+            LOGLN(velocity);
             noteOn[keynum] = true;
             sendMidiNoteOn(midi_note_for_key(keynum), velocity);
           }
@@ -149,17 +168,4 @@ void loop() {
     }
     digitalWrite(pin, 1);
   }
-}
-
-byte velocity_from_switch_time(unsigned long switch_time_micros) {
-  // TODO: / 1800 is picked just to get numbers in roughly the right range
-  unsigned long inv_velocity = switch_time_micros / 1800;
-  if (inv_velocity > 127) {
-    inv_velocity = 127;
-  }
-  return 127 - inv_velocity;
-}
-
-int key_for_kc_fisi(int kc, int fi_or_si) {
-  return (fi_or_si * 8) + kc;
 }
